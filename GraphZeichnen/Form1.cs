@@ -6,11 +6,10 @@ namespace ProcessMonitor
 {
     public partial class Form1 : Form
     {
-        private Single _X;
-        private Single _sngY;
-        private Single _cpuY;
-        private Single _proY;
-        private Single _memY;
+        private float _X;
+        private float _cpuY;
+        private float _proY;
+        private float _memY;
         private int _graphHeight;
         private int _graphWidth;
         private int _line1Y;
@@ -18,6 +17,8 @@ namespace ProcessMonitor
         private int _line3Y;
         private bool remove = true;
         private bool draw = false;
+
+        static Color colorBack = Color.FromName("ControlLight");
 
         Random rndcpu = new Random(123);
         Random rndpro = new Random(456);
@@ -28,16 +29,18 @@ namespace ProcessMonitor
         Pen penCPU = new Pen(Color.Red);
         Pen penProc = new Pen(Color.Green);
         Pen penMem = new Pen(Color.Blue);
-        Pen penFore = new Pen(SystemColors.ActiveCaption);
-        Pen penBack = new Pen(SystemColors.ControlLight);
+        Pen penFore = new Pen(Color.Black);
+        Pen penBack = new Pen(colorBack);
+        Pen penBack2 = new Pen(colorBack, 20);
         Pen penLine = new Pen(Color.Black);
 
-        const Single INCREMENT = 5;
+        const Single INCREMENT = 3;
 
         public Form1()
         {
             InitializeComponent();
 
+            timer1.Interval = 50;
             toolTipTrackbar.SetToolTip(trackBar1, timer1.Interval.ToString() + "ms");
 
             _graphHeight = panelGraph.Height;
@@ -64,9 +67,13 @@ namespace ProcessMonitor
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            Single cpu = rndcpu.Next(_graphHeight);
-            Single pro = rndpro.Next(_graphHeight);
-            Single mem = rndmem.Next(_graphHeight);
+            int rndHeight = _graphHeight / 4;
+            int rndMin = -(rndHeight / 2);
+            int rndMax = (rndHeight / 2) + 1;
+
+            Single cpu = rndcpu.Next(rndMin, rndMax);
+            Single pro = rndpro.Next(rndMin, rndMax);
+            Single mem = rndmem.Next(rndMin, rndMax);
 
             Zeichnen(cpu, pro, mem);
 
@@ -78,29 +85,31 @@ namespace ProcessMonitor
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
             int value = (int)trackBar1.Value;
-            timer1.Interval = value * 100;
+            timer1.Interval = value * 50;
             toolTipTrackbar.SetToolTip(trackBar1, timer1.Interval.ToString() + "ms");
         }
 
-        private void Zeichnen(Single cpuWert, Single proWert, Single memWert)
+        private void Zeichnen(float cpuWert, float proWert, float memWert)
         {
-            //Graphics graphics = panel1.CreateGraphics();
-            Single height = _graphHeight;
-            Single cpuY;
-            Single proY;
-            Single memY;
+            float cpuY;
+            float proY;
+            float memY;
 
-            _graphics.DrawLine(penBack, _X, 0, _X, height);
+            // positionierer übermalen
+            _graphics.DrawLine(penBack, _X, 0, _X, _graphHeight);
+            _graphics.DrawLine(penBack2, _X + 8, 0, _X + 8, _graphHeight);
 
-            cpuY = height - (cpuWert) - 1;
+            DrawLines(draw);
+
+            cpuY = _line1Y - (cpuWert) - 1;
             _graphics.DrawLine(penCPU, _X - INCREMENT, _cpuY, _X, cpuY);
             _cpuY = cpuY;
 
-            proY = height - (proWert) - 1;
+            proY = _line2Y - (proWert) - 1;
             _graphics.DrawLine(penProc, _X - INCREMENT, _proY, _X, proY);
             _proY = proY;
 
-            memY = height - (memWert) - 1;
+            memY = _line3Y - (memWert) - 1;
             _graphics.DrawLine(penMem, _X - INCREMENT, _memY, _X, memY);
             _memY = memY;
 
@@ -109,10 +118,11 @@ namespace ProcessMonitor
             if (_X > panelGraph.Width)
             {
                 _X = 0;
-                _graphics.Clear(SystemColors.ControlLight);
+                DrawLines(draw);
             }
 
-            _graphics.DrawLine(penFore, _X, 0, _X, height);
+            // positionierer neu zeichnen
+            _graphics.DrawLine(penFore, _X, 0, _X, _graphHeight);
 
         }
 
@@ -155,6 +165,31 @@ namespace ProcessMonitor
                 _graphics.DrawLine(penLine, 0, _line2Y, panelGraph.Width, _line2Y);
                 _graphics.DrawLine(penLine, 0, _line3Y, panelGraph.Width, _line3Y);
             }
+        }
+
+        private void buttonTest_Click(object sender, EventArgs e)
+        {
+            _graphics.Clear(colorBack);
+
+            penBack2 = new Pen(colorBack, 20);
+            penFore = new Pen(Color.Black);
+
+            // zeichnet ein quadrat
+            //Point[] points =
+            //{
+            //     new Point(10,  10),
+            //     new Point(10, 50),
+            //     new Point(10,  50),
+            //     new Point(50, 50),
+            //     new Point(50, 10),
+            //     new Point(10, 10)
+            //};
+
+            // using drawlines instate of drawline
+            _graphics.DrawLines(penFore, new Point[] { new Point(0, _line1Y), new Point(panelGraph.Width, _line1Y) });
+            _graphics.DrawLines(penFore, new Point[] { new Point(0, _line2Y), new Point(panelGraph.Width, _line2Y) });
+            _graphics.DrawLines(penFore, new Point[] { new Point(0, _line3Y), new Point(panelGraph.Width, _line3Y) });
+
         }
     }
 }
